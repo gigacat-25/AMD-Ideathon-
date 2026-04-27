@@ -1,12 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8080';
 
 /**
- * API Service - Centralized HTTP client for NutriSense backend.
+ * API Service - Centralized HTTP client for AaharSense AI backend.
  * Handles authentication headers, error handling, and response parsing.
  */
 
 function getHeaders() {
-  const uid = localStorage.getItem('nutrisense_uid') || 'demo_user_001';
+  const uid = localStorage.getItem('AaharSense AI_uid') || 'demo_user_001';
   return {
     'Authorization': `Bearer ${uid}`,
     'Content-Type': 'application/json',
@@ -29,15 +29,15 @@ export async function demoLogin() {
     headers: { 'Content-Type': 'application/json' },
   });
   const data = await handleResponse(res);
-  localStorage.setItem('nutrisense_uid', data.uid);
-  localStorage.setItem('nutrisense_user', JSON.stringify(data.user));
+  localStorage.setItem('AaharSense AI_uid', data.uid);
+  localStorage.setItem('AaharSense AI_user', JSON.stringify(data.user));
   return data;
 }
 
 // ============== FOOD ANALYSIS ==============
 
 export async function analyzeFoodImage(file) {
-  const uid = localStorage.getItem('nutrisense_uid') || 'demo_user_001';
+  const uid = localStorage.getItem('AaharSense AI_uid') || 'demo_user_001';
   const formData = new FormData();
   formData.append('file', file);
 
@@ -136,3 +136,4 @@ export async function healthCheck() {
   const res = await fetch(`${API_BASE}/api/health`);
   return handleResponse(res);
 }
+

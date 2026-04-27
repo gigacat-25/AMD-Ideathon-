@@ -1,207 +1,240 @@
 import { useState, useRef } from 'react';
-import { analyzeFoodImage, analyzeFoodText, logFood } from '../services/api';
+import { analyzeFoodImage, analyzeFoodText } from '../services/api';
 import './FoodScanner.css';
 
-export default function FoodScanner({ user, nav }) {
+const T = {
+  English: {
+    title: "AI Food Analyzer",
+    subtitle: "Identify nutrients and detect potential adulterants in seconds",
+    imageMode: "Image Scan",
+    textMode: "Text Input",
+    uploadTitle: "Upload Food Photo",
+    uploadSub: "Drop an image or click to browse",
+    analyzeBtn: "Analyze Meal",
+    analyzing: "Analyzing...",
+    resultsTitle: "Analysis Report",
+    safetyVerdict: "Safety Verdict",
+    healthScore: "Health Score",
+    safetyScore: "Safety Score",
+    adulterationCheck: "Adulteration Check",
+    identifiedFoods: "Identified Foods",
+    alternatives: "Healthier Alternatives",
+    reset: "Scan Another",
+    error: "Analysis failed. Please try again."
+  },
+  'ಕನ್ನಡ': {
+    title: "AI ಆಹಾರ ವಿಶ್ಲೇಷಕ",
+    subtitle: "ಪೋಷಕಾಂಶಗಳನ್ನು ಗುರುತಿಸಿ ಮತ್ತು ಕಲಬೆರಕೆಗಳನ್ನು ಪತ್ತೆಹಚ್ಚಿ",
+    imageMode: "ಚಿತ್ರ ಸ್ಕ್ಯಾನ್",
+    textMode: "ಪಠ್ಯ ಇನ್‌ಪುಟ್",
+    uploadTitle: "ಆಹಾರದ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+    uploadSub: "ಚಿತ್ರವನ್ನು ಇಲ್ಲಿ ಬಿಡಿ ಅಥವಾ ಬ್ರೌಸ್ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
+    analyzeBtn: "ವಿಶ್ಲೇಷಿಸಿ",
+    analyzing: "ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...",
+    resultsTitle: "ವಿಶ್ಲೇಷಣಾ ವರದಿ",
+    safetyVerdict: "ಸುರಕ್ಷತಾ ತೀರ್ಪು",
+    healthScore: "ಆರೋಗ್ಯ ಸ್ಕೋರ್",
+    safetyScore: "ಸುರಕ್ಷತಾ ಸ್ಕೋರ್",
+    adulterationCheck: "ಕಲಬೆರಕೆ ತಪಾಸಣೆ",
+    identifiedFoods: "ಗುರುತಿಸಲಾದ ಆಹಾರಗಳು",
+    alternatives: "ಆರೋಗ್ಯಕರ ಪರ್ಯಾಯಗಳು",
+    reset: "ಮತ್ತೊಂದು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
+    error: "ವಿಶ್ಲೇಷಣೆ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+  },
+  'हिन्दी': {
+    title: "AI भोजन विश्लेषक",
+    subtitle: "पोषक तत्वों की पहचान करें और मिलावट का पता लगाएं",
+    imageMode: "इमेज स्कैन",
+    textMode: "टेक्स्ट इनपुट",
+    uploadTitle: "भोजन का फोटो अपलोड करें",
+    uploadSub: "छवि यहाँ छोड़ें या ब्राउज़ करने के लिए क्लिक करें",
+    analyzeBtn: "विश्लेषण करें",
+    analyzing: "विश्लेषण हो रहा है...",
+    resultsTitle: "विश्लेषण रिपोर्ट",
+    safetyVerdict: "सुरक्षा फैसला",
+    healthScore: "स्वास्थ्य स्कोर",
+    safetyScore: "सुरक्षा स्कोर",
+    adulterationCheck: "मिलावट की जाँच",
+    identifiedFoods: "पहचाने गए खाद्य पदार्थ",
+    alternatives: "स्वस्थ विकल्प",
+    reset: "दूसरा स्कैन करें",
+    error: "विश्लेषण विफल रहा। कृपया पुनः प्रयास करें।"
+  }
+};
+
+export default function FoodScanner({ language }) {
   const [mode, setMode] = useState('image');
   const [preview, setPreview] = useState(null);
   const [text, setText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const fileRef = useRef(null);
+
+  const t = T[language] || T.English;
 
   const handleFile = (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    if (f.size > 5 * 1024 * 1024) { setError('Max 5MB'); return; }
     setPreview(URL.createObjectURL(f));
-    setResult(null); setSaved(false); setError('');
+    setResult(null); setError('');
     doAnalyzeImage(f);
   };
 
   const doAnalyzeImage = async (f) => {
     setAnalyzing(true); setError('');
-    try { const r = await analyzeFoodImage(f); setResult(r.analysis); }
-    catch (e) { setError(e.message || 'Analysis failed'); }
-    finally { setAnalyzing(false); }
+    try { 
+      const r = await analyzeFoodImage(f); 
+      setResult(r.analysis); 
+    } catch (e) { 
+      setError(t.error); 
+    } finally { 
+      setAnalyzing(false); 
+    }
   };
 
   const doAnalyzeText = async () => {
     if (!text.trim()) return;
     setAnalyzing(true); setError(''); setResult(null);
-    try { const r = await analyzeFoodText(text); setResult(r.analysis); }
-    catch (e) { setError(e.message || 'Analysis failed'); }
-    finally { setAnalyzing(false); }
+    try { 
+      const r = await analyzeFoodText(text); 
+      setResult(r.analysis); 
+    } catch (e) { 
+      setError(t.error); 
+    } finally { 
+      setAnalyzing(false); 
+    }
   };
 
-  const doSave = async () => {
-    if (!result || saved) return;
-    try {
-      await logFood({
-        meal_type: result.meal_type_guess || 'snack',
-        foods: result.foods || [], total_calories: result.total_calories || 0,
-        total_protein_g: result.total_protein_g || 0, total_carbs_g: result.total_carbs_g || 0,
-        total_fat_g: result.total_fat_g || 0, health_score: result.health_score || 0,
-        health_summary: result.health_summary || '', alternatives: result.alternatives || [],
-        allergens_detected: result.allergens_detected || [],
-      });
-    } catch {} finally { setSaved(true); }
+  const reset = () => { 
+    setPreview(null); setText(''); setResult(null); setError(''); 
+    if (fileRef.current) fileRef.current.value = ''; 
   };
 
-  const reset = () => { setPreview(null); setText(''); setResult(null); setSaved(false); setError(''); if (fileRef.current) fileRef.current.value = ''; };
-
-  const sc = (s) => s >= 70 ? 'emerald' : s >= 40 ? 'amber' : 'rose';
+  const getVerdictClass = (v) => {
+    if (v === 'SAFE') return 'badge-green';
+    if (v === 'UNSAFE') return 'badge-red';
+    return 'badge-yellow';
+  };
 
   return (
-    <div className="page container">
-      <div className="page-header anim-fade">
-        <span className="section-tag tag tag-emerald">Gemini Vision AI</span>
-        <h1 className="page-title">AI Food <span className="text-accent">Scanner</span></h1>
-        <p className="page-subtitle">Upload a photo or describe your meal — get clinical-grade nutritional analysis in seconds</p>
+    <div className="container py-8 anim-fade">
+      <div className="text-center mb-8">
+        <h1 className="text-accent mb-2">{t.title}</h1>
+        <p className="text-muted">{t.subtitle}</p>
       </div>
 
       {/* Mode Toggle */}
-      <div className="mode-toggle anim-slide delay-1">
-        <button className={`mode-opt ${mode === 'image' ? 'active' : ''}`} onClick={() => setMode('image')}>
-          <span>◉</span> Image Scan
+      <div className="flex justify-center gap-4 mb-8">
+        <button 
+          className={`btn ${mode === 'image' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setMode('image')}
+        >
+          📷 {t.imageMode}
         </button>
-        <button className={`mode-opt ${mode === 'text' ? 'active' : ''}`} onClick={() => setMode('text')}>
-          <span>✎</span> Text Input
+        <button 
+          className={`btn ${mode === 'text' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => setMode('text')}
+        >
+          ✎ {t.textMode}
         </button>
       </div>
 
-      <div className="scanner-grid anim-slide delay-2">
-        {/* Input */}
-        <div className="glass-static scanner-input">
+      <div className="grid grid-auto gap-8">
+        {/* Input Card */}
+        <div className="card">
           {mode === 'image' ? (
             preview ? (
-              <div className="img-preview">
-                <img src={preview} alt="Food" />
-                <button className="btn btn-secondary mt-4" onClick={reset}>↻ Scan Another</button>
+              <div className="text-center">
+                <img src={preview} alt="Food" className="w-full rounded-md mb-4 shadow-sm" style={{ maxHeight: '300px', objectFit: 'cover' }} />
+                <button className="btn btn-secondary w-full" onClick={reset}>↻ {t.reset}</button>
               </div>
             ) : (
-              <label className="dropzone" htmlFor="scan-file" tabIndex="0">
-                <input ref={fileRef} id="scan-file" type="file" accept="image/jpeg,image/png,image/webp"
-                  onChange={handleFile} className="sr-only" aria-label="Upload food image" />
-                <div className="dropzone-inner">
-                  <div className="dropzone-rings">
-                    <div className="dz-ring dz-ring-1"></div>
-                    <div className="dz-ring dz-ring-2"></div>
-                    <div className="dz-ring dz-ring-3"></div>
-                    <span className="dz-icon">◉</span>
-                  </div>
-                  <h3>Upload Food Photo</h3>
-                  <p className="text-muted text-sm">Drop an image or click to browse</p>
-                  <span className="text-xs text-muted mt-2">JPEG · PNG · WebP · Max 5MB</span>
-                </div>
+              <label className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-outline-variant rounded-lg cursor-pointer hover:border-primary-container transition-colors">
+                <input ref={fileRef} type="file" className="sr-only" onChange={handleFile} accept="image/*" />
+                <span className="text-4xl mb-4">📸</span>
+                <h3 className="mb-1">{t.uploadTitle}</h3>
+                <p className="text-xs text-muted">{t.uploadSub}</p>
               </label>
             )
           ) : (
-            <div className="text-zone">
-              <label className="label" htmlFor="food-desc">Describe your meal</label>
-              <textarea id="food-desc" className="input scan-textarea"
-                placeholder="e.g., 2 chapatis with paneer butter masala, a bowl of dal, and a glass of buttermilk"
-                value={text} onChange={e => setText(e.target.value)} rows={5} maxLength={500} />
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-xs text-muted font-mono">{text.length}/500</span>
-                <button className="btn btn-primary" onClick={doAnalyzeText} disabled={!text.trim() || analyzing}>
-                  {analyzing ? '⟳ Analyzing...' : '→ Analyze Meal'}
-                </button>
-              </div>
+            <div>
+              <textarea 
+                className="input w-full mb-4" 
+                rows={5} 
+                placeholder="e.g., 2 Chapatis, Dal, and Rice"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+              <button 
+                className="btn btn-primary w-full" 
+                onClick={doAnalyzeText}
+                disabled={!text.trim() || analyzing}
+              >
+                {analyzing ? t.analyzing : t.analyzeBtn}
+              </button>
             </div>
           )}
 
-          {/* Analyzing Overlay */}
-          {analyzing && (
-            <div className="analyze-overlay">
-              <div className="spinner"></div>
-              <h3>Gemini AI analyzing...</h3>
-              <p className="text-muted text-sm">Identifying foods · Calculating nutrition · Scoring health</p>
-              <div className="analyze-steps">
-                {['Food Detection', 'Portion Estimation', 'Nutrient Calculation', 'Health Scoring', 'GI Analysis'].map((s, i) => (
-                  <div key={i} className="analyze-step" style={{animationDelay: `${i * 0.4}s`}}>
-                    <span className="step-check">✓</span> {s}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {error && <div className="scan-error mt-4"><span>⚠</span> {error}</div>}
+          {error && <p className="text-red-500 text-sm mt-4 text-center">⚠ {error}</p>}
         </div>
 
-        {/* Results */}
-        {result && (
-          <div className="scanner-results anim-scale">
-            {/* Score + Totals */}
-            <div className="glass-static result-hero">
-              <div className="result-hero-top">
+        {/* Results Card */}
+        {(result || analyzing) && (
+          <div className="card anim-scale">
+            {analyzing ? (
+              <div className="flex flex-col items-center py-12">
+                <div className="loading-spinner mb-4"></div>
+                <p className="text-muted">{t.analyzing}</p>
+              </div>
+            ) : (
+              <div>
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-lg">{t.resultsTitle}</h2>
+                  <div className={`badge ${getVerdictClass(result.safety_verdict)}`}>
+                    {result.safety_verdict}
+                  </div>
+                </div>
+
+                <div className="grid grid-2 gap-4 mb-6">
+                  <div className="p-4 bg-background rounded-md text-center border border-outline-variant">
+                    <span className="text-xs text-muted uppercase font-bold">{t.healthScore}</span>
+                    <div className="text-2xl font-black text-secondary-container">{result.health_score}</div>
+                  </div>
+                  <div className="p-4 bg-background rounded-md text-center border border-outline-variant">
+                    <span className="text-xs text-muted uppercase font-bold">{t.safetyScore}</span>
+                    <div className="text-2xl font-black text-primary-container">{result.safety_score}</div>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted mb-2">🥗 {t.identifiedFoods}</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {result.foods?.map((f, i) => (
+                      <span key={i} className="px-3 py-1 bg-surface-dim text-xs rounded-full border border-outline-variant">
+                        {f.name} ({f.quantity})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted mb-2">🔍 {t.adulterationCheck}</h4>
+                  <p className="text-sm p-3 bg-red-50 text-red-900 rounded-md border border-red-100">
+                    {result.adulteration_check}
+                  </p>
+                </div>
+
                 <div>
-                  <span className="card-title">Analysis Complete</span>
-                  <p className="text-sm text-secondary mt-1">{result.health_summary}</p>
-                </div>
-                <div className={`score-badge badge-${sc(result.health_score)}`}>
-                  <span className="font-mono">{result.health_score}</span>
-                </div>
-              </div>
-              <div className="result-metrics">
-                {[
-                  { label: 'Calories', val: result.total_calories, unit: 'kcal', color: 'emerald' },
-                  { label: 'Protein', val: result.total_protein_g?.toFixed(1), unit: 'g', color: 'sky' },
-                  { label: 'Carbs', val: result.total_carbs_g?.toFixed(1), unit: 'g', color: 'amber' },
-                  { label: 'Fat', val: result.total_fat_g?.toFixed(1), unit: 'g', color: 'violet' },
-                ].map((m, i) => (
-                  <div key={i} className="result-metric">
-                    <span className={`metric-number font-mono stat-${m.color}`}>{m.val}</span>
-                    <span className="metric-unit text-muted">{m.unit}</span>
-                    <span className="metric-name text-muted">{m.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Food Items */}
-            <div className="glass-static">
-              <span className="card-title">Identified Foods</span>
-              <div className="food-list mt-4">
-                {result.foods?.map((f, i) => (
-                  <div key={i} className="food-row">
-                    <div>
-                      <span className="food-name">{f.name}</span>
-                      <span className="food-qty text-xs text-muted">{f.quantity}</span>
-                    </div>
-                    <div className="food-nums font-mono text-xs">
-                      <span>{f.calories}kcal</span>
-                      <span className="stat-emerald">P:{f.protein_g}g</span>
-                      <span className="stat-sky">C:{f.carbs_g}g</span>
-                      <span className="stat-amber">F:{f.fat_g}g</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Healthier Alternatives */}
-            {result.alternatives?.length > 0 && (
-              <div className="glass-static">
-                <span className="card-title">💡 Healthier Alternatives</span>
-                <div className="alt-list mt-3">
-                  {result.alternatives.map((a, i) => (
-                    <div key={i} className="alt-item">{a}</div>
-                  ))}
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted mb-2">💡 {t.alternatives}</h4>
+                  <ul className="text-sm pl-4">
+                    {result.alternatives?.map((a, i) => (
+                      <li key={i} className="mb-1">{a}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             )}
-
-            {/* Save */}
-            <div className="save-actions mt-4">
-              <button className={`btn ${saved ? 'btn-secondary' : 'btn-primary'} btn-lg w-full`}
-                onClick={doSave} disabled={saved}>
-                {saved ? '✓ Saved' : '→ Save to Log'}
-              </button>
-            </div>
           </div>
         )}
       </div>

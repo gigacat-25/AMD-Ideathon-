@@ -31,11 +31,11 @@ export default function ProfileSetup({ user, onComplete, isOnboarding }) {
     try {
       const r = await updateProfile(prof);
       const u = { ...user, profile: r.user?.profile || prof, onboarding_complete: true };
-      localStorage.setItem('nutrisense_user', JSON.stringify(u));
+      localStorage.setItem('AaharSense AI_user', JSON.stringify(u));
       onComplete(u);
     } catch {
       const u = { ...user, profile: prof, onboarding_complete: true };
-      localStorage.setItem('nutrisense_user', JSON.stringify(u));
+      localStorage.setItem('AaharSense AI_user', JSON.stringify(u));
       onComplete(u);
     } finally { setSaving(false); }
   };
@@ -115,3 +115,4 @@ export default function ProfileSetup({ user, onComplete, isOnboarding }) {
     </div>
   );
 }
+

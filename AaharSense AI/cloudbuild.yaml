@@ -1,0 +1,70 @@
+steps:
+  # Step 1: Build the React frontend
+  - name: 'node:20-slim'
+    id: build-frontend
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        cd frontend
+        npm ci
+        npm run build
+
+  # Step 2: Build and push the Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-image
+    args:
+      - 'build'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/aaharsense/aaharsense-ai:$SHORT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/aaharsense/aaharsense-ai:latest'
+      - '.'
+    waitFor: ['build-frontend']
+
+  # Step 3: Push image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-image
+    args:
+      - 'push'
+      - '--all-tags'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/aaharsense/aaharsense-ai'
+    waitFor: ['build-image']
+
+  # Step 4: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: deploy
+    args:
+      - 'run'
+      - 'deploy'
+      - 'aaharsense-ai'
+      - '--image'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/aaharsense/aaharsense-ai:$SHORT_SHA'
+      - '--region'
+      - '$_REGION'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '5'
+      - '--set-secrets'
+      - 'GEMINI_API_KEY=GEMINI_API_KEY:latest'
+    waitFor: ['push-image']
+
+substitutions:
+  _REGION: asia-south1   # Mumbai — closest to India
+
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/aaharsense/aaharsense-ai:$SHORT_SHA'
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/aaharsense/aaharsense-ai:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

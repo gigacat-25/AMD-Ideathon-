@@ -1,39 +1,52 @@
 import './Navbar.css';
 
-const NAV = [
-  { id: 'dashboard', label: 'Dashboard', icon: '⬡' },
-  { id: 'scanner', label: 'Scan Food', icon: '◉' },
-  { id: 'recommendations', label: 'AI Suggest', icon: '◈' },
-  { id: 'query', label: 'Ask AI', icon: '◎' },
-  { id: 'weekly', label: 'Reports', icon: '▣' },
-];
+const LANGUAGES = ['English', 'ಕನ್ನಡ', 'हिन्दी'];
 
-export default function Navbar({ user, page, nav, onLogout }) {
+export default function Navbar({ page, setPage, language, setLanguage }) {
   return (
-    <nav className="topbar" role="navigation" aria-label="Main navigation">
-      <div className="topbar-inner container">
-        <button className="topbar-brand" onClick={() => nav('dashboard')} aria-label="Dashboard">
-          <span className="brand-mark">◆</span>
-          <span className="brand-text">Nutri<span className="gradient-text">Sense</span></span>
+    <nav className="navbar" role="navigation" aria-label="Main navigation">
+      <div className="container flex justify-between items-center py-4">
+        {/* Brand */}
+        <button className="flex items-center gap-2 border-none bg-transparent cursor-pointer" onClick={() => setPage('scanner')}>
+          <div className="flex flex-col items-start">
+            <span className="text-xl font-black tracking-tight" style={{ color: 'var(--primary-container)' }}>
+              Aahar<span style={{ color: 'var(--secondary-container)' }}>Sense</span> AI
+            </span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted" style={{ marginTop: '-4px' }}>
+              Food Analyzer
+            </span>
+          </div>
         </button>
 
-        <div className="topbar-nav" role="menubar">
-          {NAV.map(n => (
-            <button key={n.id} className={`nav-item ${page === n.id ? 'active' : ''}`}
-              onClick={() => nav(n.id)} role="menuitem" aria-current={page === n.id ? 'page' : undefined}>
-              <span className="nav-indicator"></span>
-              <span className="nav-icon">{n.icon}</span>
-              <span className="nav-label">{n.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="topbar-end">
-          <button className={`avatar-btn ${page === 'profile' ? 'active' : ''}`}
-            onClick={() => nav('profile')} aria-label="Profile">
-            {user?.name?.[0]?.toUpperCase() || '?'}
+        {/* Navigation */}
+        <div className="flex items-center gap-6">
+          <button 
+            className={`btn-nav ${page === 'scanner' ? 'active' : ''}`}
+            onClick={() => setPage('scanner')}
+          >
+            Analyze
           </button>
-          <button className="btn btn-ghost text-xs" onClick={onLogout}>Sign Out</button>
+          <button 
+            className={`btn-nav ${page === 'about' ? 'active' : ''}`}
+            onClick={() => setPage('about')}
+          >
+            About
+          </button>
+
+          {/* Language Toggle */}
+          <div className="flex items-center gap-1 bg-surface-dim rounded-md p-1 shadow-inner">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l}
+                className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer border-none ${
+                  language === l ? 'bg-primary-container text-white shadow-sm' : 'bg-transparent text-muted hover:text-primary'
+                }`}
+                onClick={() => setLanguage(l)}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </nav>

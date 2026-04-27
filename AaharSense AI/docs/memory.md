@@ -1,11 +1,11 @@
-# NutriSense — Development Memory Log
+# AaharSense AI — Development Memory Log
 
 > This document tracks every change, decision, and implementation detail throughout the hackathon build.
 
 ---
 
 ## Project Overview
-- **Name**: NutriSense — AI-Powered Food Health Assistant
+- **Name**: AaharSense AI — AI-Powered Food Health Assistant
 - **Vertical**: Food & Health
 - **Stack**: React 18 + Vite (frontend) | FastAPI (backend) | Cloud Firestore (DB) | Gemini 2.0 Flash (AI)
 - **Google Services**: Gemini API, Firestore, Firebase Auth, Cloud Run, Cloud Storage, Cloud Logging
@@ -18,7 +18,7 @@
 **Timestamp**: Session Start
 
 **What was done:**
-1. Project structure created at `c:\Users\ASUS\Desktop\CS\Projects\nutrisense\`
+1. Project structure created at `c:\Users\ASUS\Desktop\CS\Projects\AaharSense AI\`
 2. Vite + React frontend initialized with `create-vite@latest`
 3. FastAPI backend skeleton created with proper Python package structure
 4. `.gitignore` configured to exclude node_modules, __pycache__, .venv (keeps repo < 1MB)
@@ -168,3 +168,4 @@
 - [ ] Multi-language support
 - [ ] Cloud Storage image upload (images analyzed but not persisted)
 - [ ] CI/CD pipeline
+

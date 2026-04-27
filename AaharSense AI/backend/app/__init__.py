@@ -1,1 +1,0 @@
-"""NutriSense Backend - FastAPI Application"""

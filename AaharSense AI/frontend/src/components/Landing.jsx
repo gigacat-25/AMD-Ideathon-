@@ -12,14 +12,14 @@ export default function Landing({ onLogin }) {
       onLogin(data.user);
     } catch {
       const demoUser = {
-        uid: 'demo_user_001', email: 'demo@nutrisense.app', name: 'Demo User',
+        uid: 'demo_user_001', email: 'demo@AaharSense AI.app', name: 'Demo User',
         profile: { age: 25, weight_kg: 70, height_cm: 175, gender: 'male',
           activity_level: 'moderate', health_goals: ['maintenance'],
           dietary_preferences: ['none'], allergies: [], daily_calorie_target: 2200 },
         onboarding_complete: false,
       };
-      localStorage.setItem('nutrisense_uid', demoUser.uid);
-      localStorage.setItem('nutrisense_user', JSON.stringify(demoUser));
+      localStorage.setItem('AaharSense AI_uid', demoUser.uid);
+      localStorage.setItem('AaharSense AI_user', JSON.stringify(demoUser));
       onLogin(demoUser);
     } finally { setLoading(false); }
   };
@@ -197,7 +197,7 @@ export default function Landing({ onLogin }) {
             Ready to eat <span className="hero-gradient">smarter</span>?
           </h2>
           <p className="section-desc mb-8">
-            Join NutriSense and let AI transform your relationship with food.
+            Join AaharSense AI and let AI transform your relationship with food.
           </p>
           <button className="btn btn-primary btn-lg" onClick={handleStart} disabled={loading}>
             {loading ? 'Starting...' : '→ Begin Your Journey'}
@@ -207,3 +207,4 @@ export default function Landing({ onLogin }) {
     </div>
   );
 }
+
