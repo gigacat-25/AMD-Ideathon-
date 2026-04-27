@@ -240,6 +240,7 @@ export default function FoodScanner({ language }) {
   const [cameraActive, setCameraActive] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileRef = useRef(null);
 
   const reset = () => {
     setResult(null); setError(''); setPreview(null); setFile(null); setText('');
