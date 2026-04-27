@@ -249,6 +249,10 @@ export default function FoodScanner({ language }) {
 
   const startCamera = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError("Camera access is not supported on this browser (requires HTTPS/localhost). Please upload a file instead.");
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       setCameraActive(true);
       // Need a slight timeout to let React render the <video> element before assigning stream
@@ -403,6 +407,7 @@ export default function FoodScanner({ language }) {
                   ref={videoRef}
                   autoPlay
                   playsInline
+                  muted
                   style={{ width: '100%', borderRadius: 'var(--r-md)', maxHeight: 300, objectFit: 'cover', backgroundColor: '#000', marginBottom: 16 }}
                 />
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
