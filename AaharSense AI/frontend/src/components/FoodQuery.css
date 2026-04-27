@@ -1,0 +1,22 @@
+.chat-layout { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--s-4); }
+.chat-box { min-height: 400px; max-height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s-4); }
+.chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 350px; }
+.suggestions { display: flex; flex-wrap: wrap; gap: var(--s-2); justify-content: center; max-width: 600px; }
+.sug-btn { padding: var(--s-2) var(--s-4); background: var(--glass-1); border: 1px solid var(--glass-border); border-radius: var(--r-full); color: var(--text-muted); font-family: var(--font-sans); font-size: 0.75rem; cursor: pointer; transition: all var(--dur-fast); }
+.sug-btn:hover { border-color: var(--emerald-400); color: var(--emerald-400); background: rgba(52,211,153,0.04); }
+.chat-msg { animation: fadeIn 0.3s ease; }
+.msg-q { display: flex; gap: var(--s-3); padding: var(--s-4); background: var(--glass-1); border-radius: var(--r-md); }
+.msg-a { display: flex; gap: var(--s-3); padding: var(--s-4); background: rgba(52,211,153,0.04); border-radius: var(--r-md); border-left: 2px solid var(--emerald-400); }
+.msg-avatar { font-size: 1.1rem; flex-shrink: 0; }
+.msg-a-body { flex: 1; }
+.msg-a-body p { font-size: 0.875rem; line-height: 1.8; color: var(--text-secondary); }
+.msg-facts { padding: var(--s-3); background: var(--glass-1); border-radius: var(--r-sm); }
+.msg-facts ul { list-style: none; font-size: 0.78rem; color: var(--text-muted); }
+.msg-facts li::before { content: "• "; color: var(--emerald-400); }
+.msg-tip { padding: var(--s-3); background: rgba(251,191,36,0.04); border-radius: var(--r-sm); font-size: 0.85rem; color: var(--text-secondary); }
+.typing-dots { display: flex; gap: 4px; padding: var(--s-2); }
+.typing-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald-400); animation: pulse 1.4s infinite; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+.chat-input-bar { display: flex; gap: var(--s-2); }
+.chat-input-bar .input { flex: 1; }
