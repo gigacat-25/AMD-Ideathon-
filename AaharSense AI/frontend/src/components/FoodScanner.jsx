@@ -1,243 +1,457 @@
 import { useState, useRef } from 'react';
-import { analyzeFoodImage, analyzeFoodText } from '../services/api';
-import './FoodScanner.css';
 
+const API = '/api';
+
+// Translations
 const T = {
   English: {
-    title: "AI Food Analyzer",
-    subtitle: "Identify nutrients and detect potential adulterants in seconds",
-    imageMode: "Image Scan",
-    textMode: "Text Input",
-    uploadTitle: "Upload Food Photo",
-    uploadSub: "Drop an image or click to browse",
-    analyzeBtn: "Analyze Meal",
-    analyzing: "Analyzing...",
-    resultsTitle: "Analysis Report",
-    safetyVerdict: "Safety Verdict",
-    healthScore: "Health Score",
-    safetyScore: "Safety Score",
-    adulterationCheck: "Adulteration Check",
-    identifiedFoods: "Identified Foods",
-    alternatives: "Healthier Alternatives",
-    reset: "Scan Another",
-    error: "Analysis failed. Please try again."
+    heroTitle: ['Detect ', 'Adulteration', ' in Indian Food'],
+    heroSub: 'Upload a photo or describe your food — Gemini AI checks for safety risks and nutritional value instantly.',
+    ctaScan: '🔍 Scan Food',
+    imageScan: '📷 Image Scan',
+    textInput: '✏️ Text Input',
+    uploadTitle: 'Drop a food photo here',
+    uploadSub: 'JPG, PNG, WEBP supported',
+    placeholder: 'e.g. Milk from a local vendor, turmeric powder, chapati with dal…',
+    analyzeBtn: 'Analyze for Safety',
+    analyzing: 'Analyzing…',
+    reportTitle: 'AaharSense Report',
+    healthScore: 'Health Score',
+    safetyScore: 'Safety Score',
+    calories: 'Calories',
+    protein: 'Protein',
+    carbs: 'Carbs',
+    fat: 'Fat',
+    foods: 'Identified Foods',
+    adulteration: 'Adulteration Check',
+    allergens: 'Allergens Detected',
+    clinical: 'Clinical Summary',
+    swaps: 'Healthier Alternatives',
+    reset: '← Scan Another',
+    errorGeneric: 'Analysis failed. Please try again.',
+    noInput: 'Please describe your food first.',
+    noImage: 'Please upload or capture an image.',
+    scanning: 'AaharSense AI is running safety checks…',
   },
   'ಕನ್ನಡ': {
-    title: "AI ಆಹಾರ ವಿಶ್ಲೇಷಕ",
-    subtitle: "ಪೋಷಕಾಂಶಗಳನ್ನು ಗುರುತಿಸಿ ಮತ್ತು ಕಲಬೆರಕೆಗಳನ್ನು ಪತ್ತೆಹಚ್ಚಿ",
-    imageMode: "ಚಿತ್ರ ಸ್ಕ್ಯಾನ್",
-    textMode: "ಪಠ್ಯ ಇನ್‌ಪುಟ್",
-    uploadTitle: "ಆಹಾರದ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
-    uploadSub: "ಚಿತ್ರವನ್ನು ಇಲ್ಲಿ ಬಿಡಿ ಅಥವಾ ಬ್ರೌಸ್ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
-    analyzeBtn: "ವಿಶ್ಲೇಷಿಸಿ",
-    analyzing: "ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...",
-    resultsTitle: "ವಿಶ್ಲೇಷಣಾ ವರದಿ",
-    safetyVerdict: "ಸುರಕ್ಷತಾ ತೀರ್ಪು",
-    healthScore: "ಆರೋಗ್ಯ ಸ್ಕೋರ್",
-    safetyScore: "ಸುರಕ್ಷತಾ ಸ್ಕೋರ್",
-    adulterationCheck: "ಕಲಬೆರಕೆ ತಪಾಸಣೆ",
-    identifiedFoods: "ಗುರುತಿಸಲಾದ ಆಹಾರಗಳು",
-    alternatives: "ಆರೋಗ್ಯಕರ ಪರ್ಯಾಯಗಳು",
-    reset: "ಮತ್ತೊಂದು ಸ್ಕ್ಯಾನ್ ಮಾಡಿ",
-    error: "ವಿಶ್ಲೇಷಣೆ ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+    heroTitle: ['ಭಾರತೀಯ ಆಹಾರದಲ್ಲಿ ', 'ಕಲಬೆರಕೆ', ' ಪತ್ತೆಹಚ್ಚಿ'],
+    heroSub: 'ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಅಥವಾ ಆಹಾರ ವಿವರಿಸಿ — AI ತಕ್ಷಣ ಪರೀಕ್ಷಿಸುತ್ತದೆ.',
+    ctaScan: '🔍 ಸ್ಕ್ಯಾನ್ ಮಾಡಿ',
+    imageScan: '📷 ಚಿತ್ರ ಸ್ಕ್ಯಾನ್',
+    textInput: '✏️ ಪಠ್ಯ ಇನ್‌ಪುಟ್',
+    uploadTitle: 'ಚಿತ್ರ ಇಲ್ಲಿ ಡ್ರಾಪ್ ಮಾಡಿ',
+    uploadSub: 'JPG, PNG, WEBP ಬೆಂಬಲಿತ',
+    placeholder: 'ಉದಾ. ಸ್ಥಳೀಯ ಹಾಲು, ಅರಿಶಿನ, ಚಪಾತಿ…',
+    analyzeBtn: 'ಸುರಕ್ಷತೆ ವಿಶ್ಲೇಷಿಸಿ',
+    analyzing: 'ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ…',
+    reportTitle: 'AaharSense ವರದಿ',
+    healthScore: 'ಆರೋಗ್ಯ ಸ್ಕೋರ್',
+    safetyScore: 'ಸುರಕ್ಷತಾ ಸ್ಕೋರ್',
+    calories: 'ಕ್ಯಾಲೊರಿಗಳು',
+    protein: 'ಪ್ರೋಟೀನ್',
+    carbs: 'ಕಾರ್ಬ್ಸ್',
+    fat: 'ಕೊಬ್ಬು',
+    foods: 'ಗುರುತಿಸಲಾದ ಆಹಾರ',
+    adulteration: 'ಕಲಬೆರಕೆ ತಪಾಸಣೆ',
+    allergens: 'ಅಲರ್ಜನ್‌ಗಳು',
+    clinical: 'ವೈದ್ಯಕೀಯ ಸಾರಾಂಶ',
+    swaps: 'ಆರೋಗ್ಯಕರ ಪರ್ಯಾಯಗಳು',
+    reset: '← ಮತ್ತೊಮ್ಮೆ ಸ್ಕ್ಯಾನ್',
+    errorGeneric: 'ವಿಶ್ಲೇಷಣೆ ವಿಫಲವಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+    noInput: 'ಆಹಾರ ವಿವರಣೆ ನಮೂದಿಸಿ.',
+    noImage: 'ದಯವಿಟ್ಟು ಚಿತ್ರ ಆಯ್ಕೆ ಮಾಡಿ.',
+    scanning: 'AI ಸುರಕ್ಷತೆ ಪರಿಶೀಲಿಸುತ್ತಿದೆ…',
   },
   'हिन्दी': {
-    title: "AI भोजन विश्लेषक",
-    subtitle: "पोषक तत्वों की पहचान करें और मिलावट का पता लगाएं",
-    imageMode: "इमेज स्कैन",
-    textMode: "टेक्स्ट इनपुट",
-    uploadTitle: "भोजन का फोटो अपलोड करें",
-    uploadSub: "छवि यहाँ छोड़ें या ब्राउज़ करने के लिए क्लिक करें",
-    analyzeBtn: "विश्लेषण करें",
-    analyzing: "विश्लेषण हो रहा है...",
-    resultsTitle: "विश्लेषण रिपोर्ट",
-    safetyVerdict: "सुरक्षा फैसला",
-    healthScore: "स्वास्थ्य स्कोर",
-    safetyScore: "सुरक्षा स्कोर",
-    adulterationCheck: "मिलावट की जाँच",
-    identifiedFoods: "पहचाने गए खाद्य पदार्थ",
-    alternatives: "स्वस्थ विकल्प",
-    reset: "दूसरा स्कैन करें",
-    error: "विश्लेषण विफल रहा। कृपया पुनः प्रयास करें।"
-  }
+    heroTitle: ['भारतीय भोजन में ', 'मिलावट', ' का पता लगाएं'],
+    heroSub: 'फोटो अपलोड करें या भोजन बताएं — AI तुरंत सुरक्षा जाँच करेगा।',
+    ctaScan: '🔍 स्कैन करें',
+    imageScan: '📷 इमेज स्कैन',
+    textInput: '✏️ टेक्स्ट इनपुट',
+    uploadTitle: 'यहाँ फोटो छोड़ें',
+    uploadSub: 'JPG, PNG, WEBP समर्थित',
+    placeholder: 'उदा. स्थानीय दूध, हल्दी पाउडर, चपाती…',
+    analyzeBtn: 'सुरक्षा जाँच करें',
+    analyzing: 'विश्लेषण हो रहा है…',
+    reportTitle: 'AaharSense रिपोर्ट',
+    healthScore: 'स्वास्थ्य स्कोर',
+    safetyScore: 'सुरक्षा स्कोर',
+    calories: 'कैलोरी',
+    protein: 'प्रोटीन',
+    carbs: 'कार्ब्स',
+    fat: 'वसा',
+    foods: 'पहचाने गए खाद्य',
+    adulteration: 'मिलावट जाँच',
+    allergens: 'एलर्जन',
+    clinical: 'नैदानिक सारांश',
+    swaps: 'स्वस्थ विकल्प',
+    reset: '← दूसरा स्कैन',
+    errorGeneric: 'विश्लेषण विफल। कृपया पुनः प्रयास करें।',
+    noInput: 'पहले भोजन का विवरण दें।',
+    noImage: 'कृपया इमेज चुनें।',
+    scanning: 'AI सुरक्षा की जाँच कर रहा है…',
+  },
 };
 
+function ScoreBar({ label, value, type }) {
+  return (
+    <div className="score-bar-wrap">
+      <div className="score-bar-label">
+        <span>{label}</span>
+        <span>{value}/100</span>
+      </div>
+      <div className="score-bar-track">
+        <div
+          className={`score-bar-fill ${type}`}
+          style={{ width: `${Math.min(value, 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function VerdictBadge({ verdict }) {
+  const map = {
+    'SAFE': ['verdict-safe', '✅', 'SAFE'],
+    'PROCEED WITH CAUTION': ['verdict-caution', '⚠️', 'CAUTION'],
+    'UNSAFE': ['verdict-unsafe', '🚫', 'UNSAFE'],
+  };
+  const [cls, icon, label] = map[verdict?.toUpperCase()] ?? ['verdict-caution', '⚠️', verdict];
+  return (
+    <div className={`verdict ${cls}`}>
+      {icon} {label}
+    </div>
+  );
+}
+
+function Results({ data, t, onReset }) {
+  const riskIcon = { low: 'risk-low', medium: 'risk-medium', high: 'risk-high' };
+
+  return (
+    <div className="fade-up" style={{ marginTop: 24 }}>
+      <div className="card">
+        {/* Header */}
+        <div className="flex items-center justify-between" style={{ marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 800 }}>{t.reportTitle}</h2>
+          <VerdictBadge verdict={data.safety_verdict} />
+        </div>
+
+        {/* Score bars */}
+        <div style={{ marginBottom: 20 }}>
+          <ScoreBar label={t.healthScore} value={data.health_score ?? 0} type="health" />
+          <div style={{ marginTop: 10 }} />
+          <ScoreBar label={t.safetyScore} value={data.safety_score ?? 0} type="safety" />
+        </div>
+
+        {/* Macros */}
+        <div className="macro-grid">
+          {[
+            { v: data.total_calories, u: 'kcal', l: t.calories },
+            { v: `${data.total_protein_g}g`, u: '', l: t.protein },
+            { v: `${data.total_carbs_g}g`, u: '', l: t.carbs },
+            { v: `${data.total_fat_g}g`, u: '', l: t.fat },
+          ].map(({ v, l }) => (
+            <div className="macro-card" key={l}>
+              <div className="macro-val">{v}</div>
+              <div className="macro-lbl">{l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Foods */}
+        {data.foods?.length > 0 && (
+          <>
+            <div className="section-head">{t.foods}</div>
+            <div className="flex flex-wrap gap-2" style={{ marginBottom: 20 }}>
+              {data.foods.map((f, i) => (
+                <span key={i} className="food-pill">
+                  <span className={`risk-dot ${riskIcon[f.adulteration_risk?.toLowerCase()] ?? 'risk-medium'}`} />
+                  {f.name} · {f.quantity}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Adulteration */}
+        <div className="section-head">{t.adulteration}</div>
+        <div className="adulteration-box" style={{ marginBottom: 20 }}>
+          {data.adulteration_check}
+        </div>
+
+        {/* Allergens */}
+        {data.allergens_detected?.length > 0 && (
+          <>
+            <div className="section-head">{t.allergens}</div>
+            <div className="flex flex-wrap gap-2" style={{ marginBottom: 20 }}>
+              {data.allergens_detected.map((a, i) => (
+                <span key={i} style={{
+                  padding: '4px 10px', borderRadius: 999, fontSize: '0.78rem',
+                  fontWeight: 700, background: '#FFEBEE', color: '#B71C1C',
+                  border: '1px solid #EF9A9A'
+                }}>{a}</span>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Clinical summary */}
+        <div className="section-head">{t.clinical}</div>
+        <p className="text-sm" style={{
+          background: 'var(--green-dim)', borderRadius: 'var(--r-md)',
+          padding: '14px 16px', color: '#1B4D1A', marginBottom: 20
+        }}>
+          {data.health_summary}
+        </p>
+
+        {/* Alternatives */}
+        {data.alternatives?.length > 0 && (
+          <>
+            <div className="section-head">{t.swaps}</div>
+            <div>
+              {data.alternatives.map((a, i) => (
+                <div key={i} className="alt-item">
+                  <span className="alt-icon">→</span>
+                  {a}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Reset */}
+        <button className="btn btn-ghost w-full" style={{ marginTop: 24 }} onClick={onReset}>
+          {t.reset}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function FoodScanner({ language }) {
-  const [mode, setMode] = useState('image');
-  const [preview, setPreview] = useState(null);
+  const t = T[language] || T.English;
+  const [mode, setMode] = useState('text');
   const [text, setText] = useState('');
-  const [analyzing, setAnalyzing] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
-  const fileRef = useRef(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
-  const t = T[language] || T.English;
+  const reset = () => {
+    setResult(null); setError(''); setPreview(null); setFile(null); setText('');
+    if (fileRef.current) fileRef.current.value = '';
+    stopCamera();
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      setCameraActive(true);
+      // Need a slight timeout to let React render the <video> element before assigning stream
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      setError("Camera access denied. Please allow camera permissions or upload a file.");
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(t => t.stop());
+      videoRef.current.srcObject = null;
+    }
+    setCameraActive(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const v = videoRef.current;
+      const c = canvasRef.current;
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(v, 0, 0, c.width, c.height);
+
+      c.toBlob((blob) => {
+        const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+        setFile(file);
+        setPreview(URL.createObjectURL(blob));
+        stopCamera();
+      }, "image/jpeg");
+    }
+  };
 
   const handleFile = (e) => {
-    const f = e.target.files[0];
+    const f = e.target.files?.[0];
     if (!f) return;
+    setFile(f);
     setPreview(URL.createObjectURL(f));
     setResult(null); setError('');
-    doAnalyzeImage(f);
   };
 
-  const doAnalyzeImage = async (f) => {
-    setAnalyzing(true); setError('');
-    try { 
-      const r = await analyzeFoodImage(f); 
-      setResult(r.analysis); 
-    } catch (e) { 
-      setError(t.error); 
-    } finally { 
-      setAnalyzing(false); 
+  const runTextAnalysis = async () => {
+    if (!text.trim()) { setError(t.noInput); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const res = await fetch(`${API}/analyze-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: text }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail || t.errorGeneric);
+      setResult(json.analysis);
+    } catch (e) {
+      setError(e.message || t.errorGeneric);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const doAnalyzeText = async () => {
-    if (!text.trim()) return;
-    setAnalyzing(true); setError(''); setResult(null);
-    try { 
-      const r = await analyzeFoodText(text); 
-      setResult(r.analysis); 
-    } catch (e) { 
-      setError(t.error); 
-    } finally { 
-      setAnalyzing(false); 
+  const runImageAnalysis = async () => {
+    if (!file) { setError(t.noImage); return; }
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`${API}/analyze-image`, { method: 'POST', body: form });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail || t.errorGeneric);
+      setResult(json.analysis);
+    } catch (e) {
+      setError(e.message || t.errorGeneric);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const reset = () => { 
-    setPreview(null); setText(''); setResult(null); setError(''); 
-    if (fileRef.current) fileRef.current.value = ''; 
-  };
-
-  const getVerdictClass = (v) => {
-    if (v === 'SAFE') return 'badge-green';
-    if (v === 'UNSAFE') return 'badge-red';
-    return 'badge-yellow';
   };
 
   return (
-    <div className="container py-8 anim-fade">
-      <div className="text-center mb-8">
-        <h1 className="text-accent mb-2">{t.title}</h1>
-        <p className="text-muted">{t.subtitle}</p>
+    <>
+      {/* Hero */}
+      <div className="hero">
+        <div className="hero-badge">🇮🇳 AMD Ideathon 2025</div>
+        <h1>
+          {t.heroTitle[0]}
+          <span>{t.heroTitle[1]}</span>
+          {t.heroTitle[2]}
+        </h1>
+        <p>{t.heroSub}</p>
+        <div className="hero-cta">
+          <button className="btn btn-primary" onClick={() => document.getElementById('scanner-anchor')?.scrollIntoView({ behavior: 'smooth' })}>
+            {t.ctaScan}
+          </button>
+          <a className="btn btn-ghost" href="#about">Learn More</a>
+        </div>
       </div>
 
-      {/* Mode Toggle */}
-      <div className="flex justify-center gap-4 mb-8">
-        <button 
-          className={`btn ${mode === 'image' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setMode('image')}
-        >
-          📷 {t.imageMode}
-        </button>
-        <button 
-          className={`btn ${mode === 'text' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setMode('text')}
-        >
-          ✎ {t.textMode}
-        </button>
-      </div>
-
-      <div className="grid grid-auto gap-8">
-        {/* Input Card */}
-        <div className="card">
-          {mode === 'image' ? (
-            preview ? (
-              <div className="text-center">
-                <img src={preview} alt="Food" className="w-full rounded-md mb-4 shadow-sm" style={{ maxHeight: '300px', objectFit: 'cover' }} />
-                <button className="btn btn-secondary w-full" onClick={reset}>↻ {t.reset}</button>
-              </div>
-            ) : (
-              <label className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-outline-variant rounded-lg cursor-pointer hover:border-primary-container transition-colors">
-                <input ref={fileRef} type="file" className="sr-only" onChange={handleFile} accept="image/*" />
-                <span className="text-4xl mb-4">📸</span>
-                <h3 className="mb-1">{t.uploadTitle}</h3>
-                <p className="text-xs text-muted">{t.uploadSub}</p>
-              </label>
-            )
-          ) : (
-            <div>
-              <textarea 
-                className="input w-full mb-4" 
-                rows={5} 
-                placeholder="e.g., 2 Chapatis, Dal, and Rice"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
-              <button 
-                className="btn btn-primary w-full" 
-                onClick={doAnalyzeText}
-                disabled={!text.trim() || analyzing}
-              >
-                {analyzing ? t.analyzing : t.analyzeBtn}
-              </button>
-            </div>
-          )}
-
-          {error && <p className="text-red-500 text-sm mt-4 text-center">⚠ {error}</p>}
+      {/* Scanner */}
+      <div className="scanner-section" id="scanner-anchor">
+        {/* Mode Tabs */}
+        <div className="mode-tabs">
+          <button className={`mode-tab ${mode === 'text' ? 'active' : ''}`} onClick={() => { setMode('text'); reset(); }}>
+            {t.textInput}
+          </button>
+          <button className={`mode-tab ${mode === 'image' ? 'active' : ''}`} onClick={() => { setMode('image'); reset(); }}>
+            {t.imageScan}
+          </button>
         </div>
 
-        {/* Results Card */}
-        {(result || analyzing) && (
-          <div className="card anim-scale">
-            {analyzing ? (
-              <div className="flex flex-col items-center py-12">
-                <div className="loading-spinner mb-4"></div>
-                <p className="text-muted">{t.analyzing}</p>
+        {/* Input Card */}
+        {!result && (
+          <div className="card">
+            {mode === 'text' ? (
+              <>
+                <textarea
+                  className="textarea"
+                  rows={5}
+                  placeholder={t.placeholder}
+                  value={text}
+                  onChange={e => setText(e.target.value)}
+                />
+                <button
+                  className="btn btn-primary w-full mt-3"
+                  onClick={runTextAnalysis}
+                  disabled={loading}
+                >
+                  {loading ? t.analyzing : t.analyzeBtn}
+                </button>
+              </>
+            ) : preview ? (
+              <>
+                <img
+                  src={preview}
+                  alt="Food"
+                  style={{ width: '100%', borderRadius: 'var(--r-md)', maxHeight: 280, objectFit: 'cover', marginBottom: 16 }}
+                />
+                <div className="flex gap-2">
+                  <button className="btn btn-green w-full" onClick={runImageAnalysis} disabled={loading}>
+                    {loading ? t.analyzing : t.analyzeBtn}
+                  </button>
+                  <button className="btn btn-ghost" onClick={reset} style={{ flexShrink: 0 }}>✕</button>
+                </div>
+              </>
+            ) : cameraActive ? (
+              <div style={{ textAlign: 'center' }}>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  style={{ width: '100%', borderRadius: 'var(--r-md)', maxHeight: 300, objectFit: 'cover', backgroundColor: '#000', marginBottom: 16 }}
+                />
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+                <div className="flex gap-2">
+                  <button className="btn btn-primary w-full" onClick={capturePhoto}>📸 Snap Photo</button>
+                  <button className="btn btn-ghost" onClick={stopCamera} style={{ flexShrink: 0 }}>Cancel</button>
+                </div>
               </div>
             ) : (
-              <div>
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className="text-lg">{t.resultsTitle}</h2>
-                  <div className={`badge ${getVerdictClass(result.safety_verdict)}`}>
-                    {result.safety_verdict}
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <label className="upload-zone">
+                  <input ref={fileRef} type="file" className="sr-only" accept="image/*" onChange={handleFile} />
+                  <div className="upload-zone-icon">📁</div>
+                  <h3>{t.uploadTitle}</h3>
+                  <p>{t.uploadSub}</p>
+                </label>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+                  <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase' }}>OR</span>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
                 </div>
 
-                <div className="grid grid-2 gap-4 mb-6">
-                  <div className="p-4 bg-background rounded-md text-center border border-outline-variant">
-                    <span className="text-xs text-muted uppercase font-bold">{t.healthScore}</span>
-                    <div className="text-2xl font-black text-secondary-container">{result.health_score}</div>
-                  </div>
-                  <div className="p-4 bg-background rounded-md text-center border border-outline-variant">
-                    <span className="text-xs text-muted uppercase font-bold">{t.safetyScore}</span>
-                    <div className="text-2xl font-black text-primary-container">{result.safety_score}</div>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted mb-2">🥗 {t.identifiedFoods}</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {result.foods?.map((f, i) => (
-                      <span key={i} className="px-3 py-1 bg-surface-dim text-xs rounded-full border border-outline-variant">
-                        {f.name} ({f.quantity})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted mb-2">🔍 {t.adulterationCheck}</h4>
-                  <p className="text-sm p-3 bg-red-50 text-red-900 rounded-md border border-red-100">
-                    {result.adulteration_check}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted mb-2">💡 {t.alternatives}</h4>
-                  <ul className="text-sm pl-4">
-                    {result.alternatives?.map((a, i) => (
-                      <li key={i} className="mb-1">{a}</li>
-                    ))}
-                  </ul>
-                </div>
+                <button className="btn btn-ghost w-full" onClick={startCamera} style={{ padding: '16px' }}>
+                  <span style={{ fontSize: '1.2rem', marginRight: 8 }}>📷</span> Take Photo with Camera
+                </button>
               </div>
+            )}
+
+            {/* Loading spinner below button */}
+            {loading && (
+              <div className="spinner-wrap">
+                <div className="spinner" />
+                <p className="text-sm text-muted">{t.scanning}</p>
+              </div>
+            )}
+
+            {/* Error */}
+            {error && (
+              <p style={{ marginTop: 12, fontSize: '0.875rem', color: '#B71C1C', textAlign: 'center' }}>
+                ⚠️ {error}
+              </p>
             )}
           </div>
         )}
+
+        {/* Results */}
+        {result && <Results data={result} t={t} onReset={reset} />}
       </div>
-    </div>
+    </>
   );
 }

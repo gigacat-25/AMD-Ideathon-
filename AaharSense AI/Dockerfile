@@ -1,45 +1,42 @@
 # =========================================================
-# AaharSense AI — Dockerfile
+# AaharSense AI — Production Dockerfile
+# FastAPI (Python) serves React frontend + Gemini API
 # Target: Google Cloud Run (port 8080)
-# Entry: Streamlit app (app.py) with Gemini AI backend
 # =========================================================
 
-FROM python:3.11-slim
+# ── Stage 1: Build React ──────────────────────────────────
+FROM node:20-slim AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
 
-# System deps + curl for health checks
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
+# ── Stage 2: Python runtime ───────────────────────────────
+FROM python:3.11-slim AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Env vars
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PORT=8080
 
 WORKDIR /app
 
-# Install Python deps first (caching layer)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy app code
+COPY main.py .
+COPY .env* ./
 
-# Copy pre-built React assets into backend static dir so FastAPI can serve them
-RUN mkdir -p /app/backend/static
-COPY frontend/dist/ /app/backend/static/
+# Copy pre-built React
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Expose Cloud Run port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s \
-    CMD curl --fail http://localhost:8080/_stcore/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s \
+    CMD curl -f http://localhost:8080/api/health || exit 1
 
-# Run Streamlit on 0.0.0.0 so Cloud Run can reach it
-CMD ["python", "-m", "streamlit", "run", "app.py", \
-    "--server.port", "8080", \
-    "--server.address", "0.0.0.0", \
-    "--server.headless", "true", \
-    "--server.enableCORS", "false", \
-    "--server.enableXsrfProtection", "false"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
